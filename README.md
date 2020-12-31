@@ -1,2 +1,2 @@
 # ManualAccounter
-Recording your acconts.
+Recording one's accont manually.
