@@ -22,28 +22,51 @@ func main() {
 		fmt.Println("[ERROR] input VALUATION and GAIN as the argument.")
 		os.Exit(1)
 	}
+	valArg := os.Args[1]
+	gainArg := os.Args[2]
 
+	account := getExistingAcconut(accountFileName)
+	newEntry, err := getNewEntry(valArg, gainArg)
+	if err != nil {
+		panic(err)
+	}
+
+	newAccount := append(*account, newEntry)
+
+	if err := writeNewAccount(&newAccount, accountFileName); err != nil {
+		panic(err)
+	}
+}
+
+func getExistingAcconut(accountFileName string) *[]Entry {
 	account := []Entry{}
 	bytes, err := ioutil.ReadFile(accountFileName)
 	if err == nil {
 		_ = json.Unmarshal(bytes, &account)
 	}
+	return &account
+}
 
-	val, err := strconv.ParseFloat(os.Args[1], 64)
+func getNewEntry(valArg, gainArg string) (Entry, error) {
+	val, err := strconv.ParseFloat(valArg, 64)
 	if err != nil {
-		panic(err)
+		return Entry{}, err
 	}
-	gain, err := strconv.ParseFloat(os.Args[2], 64)
+	gain, err := strconv.ParseFloat(gainArg, 64)
 	if err != nil {
-		panic(err)
+		return Entry{}, err
 	}
 	now := time.Now()
-	newEntry := Entry{Time: now, Valuation: val, Gain: gain}
-	newBytes, err := json.MarshalIndent(append(account, newEntry), "", "    ")
+	return Entry{Time: now, Valuation: val, Gain: gain}, nil
+}
+
+func writeNewAccount(newAccount *[]Entry, accountFileName string) error {
+	newBytes, err := json.MarshalIndent(newAccount, "", "    ")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if err := ioutil.WriteFile(accountFileName, newBytes, 0666); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
