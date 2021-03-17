@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/massn/ManualAccounter/pkg/chart"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -18,14 +19,17 @@ type Entry struct {
 }
 
 func main() {
+	account := getExistingAcconut(accountFileName)
 	if len(os.Args) != 3 {
-		fmt.Println("[ERROR] input VALUATION and GAIN as the argument.")
-		os.Exit(1)
+		if err := drawAccount(account); err != nil {
+			panic(err)
+		}
+		fmt.Println("Drawed the existing account.")
+		os.Exit(0)
 	}
 	valArg := os.Args[1]
 	gainArg := os.Args[2]
 
-	account := getExistingAcconut(accountFileName)
 	newEntry, err := getNewEntry(valArg, gainArg)
 	if err != nil {
 		panic(err)
@@ -36,6 +40,23 @@ func main() {
 	if err := writeNewAccount(&newAccount, accountFileName); err != nil {
 		panic(err)
 	}
+	if err := drawAccount(&newAccount); err != nil {
+		panic(err)
+	}
+}
+
+func drawAccount(account *[]Entry) error {
+	gainData := []chart.PointData{}
+	valuationData := []chart.PointData{}
+	for _, entry := range *account {
+		date := entry.Time.Format("2006-01-02")
+		gainData = append(gainData, chart.PointData{Date: date, Value: entry.Gain})
+		valuationData = append(valuationData, chart.PointData{Date: date, Value: entry.Valuation})
+	}
+	return chart.Render(
+		chart.SeriesData{Name: "Gain", ChartData: gainData},
+		chart.SeriesData{Name: "Valuation", ChartData: valuationData},
+	)
 }
 
 func getExistingAcconut(accountFileName string) *[]Entry {
