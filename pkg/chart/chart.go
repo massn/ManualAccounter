@@ -55,7 +55,15 @@ func lineMulti(sd SeriesData) *charts.Line {
 	}
 
 	line.SetXAxis(xAxis).
-		AddSeries(sd.Name, data)
+		AddSeries(sd.Name, data).
+		SetSeriesOptions(
+			charts.WithEmphasisOpts(opts.Emphasis{
+				Label: &opts.Label{
+					Show:     true,
+					Color:    "black",
+					Position: "left",
+				}}),
+		)
 
 	return line
 }
