@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/massn/ManualAccounter/pkg/chart"
 	"io/ioutil"
@@ -10,7 +11,7 @@ import (
 	"time"
 )
 
-const accountFileName = "account.json"
+const defaultAccountFileName = "account.json"
 
 type Entry struct {
 	Time      time.Time `json:"time,omitempty"`
@@ -19,16 +20,19 @@ type Entry struct {
 }
 
 func main() {
-	account := getExistingAcconut(accountFileName)
-	if len(os.Args) != 3 {
+	accountFileName := flag.String("a", defaultAccountFileName, "account json file")
+	flag.Parse()
+
+	account := getExistingAcconut(*accountFileName)
+	if flag.NArg() == 0 {
 		if err := drawAccount(account); err != nil {
 			panic(err)
 		}
 		fmt.Println("Drawed the existing account.")
 		os.Exit(0)
 	}
-	valArg := os.Args[1]
-	gainArg := os.Args[2]
+	valArg := flag.Arg(0)
+	gainArg := flag.Arg(1)
 
 	newEntry, err := getNewEntry(valArg, gainArg)
 	if err != nil {
@@ -37,12 +41,13 @@ func main() {
 
 	newAccount := append(*account, newEntry)
 
-	if err := writeNewAccount(&newAccount, accountFileName); err != nil {
+	if err := writeNewAccount(&newAccount, *accountFileName); err != nil {
 		panic(err)
 	}
 	if err := drawAccount(&newAccount); err != nil {
 		panic(err)
 	}
+	fmt.Println("Drawed the new account.")
 }
 
 func drawAccount(account *[]Entry) error {
