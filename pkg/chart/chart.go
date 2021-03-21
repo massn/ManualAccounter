@@ -19,13 +19,13 @@ type PointData struct {
 	Value float64
 }
 
-func Render(gain, valuation SeriesData) error {
+func Render(gain, valuation SeriesData, filePath string) error {
 	page := components.NewPage()
 	page.AddCharts(
 		lineMulti(gain),
 		lineMulti(valuation),
 	)
-	f, err := os.Create("line.html")
+	f, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}

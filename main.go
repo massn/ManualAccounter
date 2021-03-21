@@ -24,11 +24,14 @@ func main() {
 	flag.Parse()
 
 	account := getExistingAcconut(*accountFileName)
+
+	filePath := fmt.Sprintf("charts/%s.html", time.Now().Format("2006-01-02_03:04:05"))
+
 	if flag.NArg() == 0 {
-		if err := drawAccount(account); err != nil {
+		if err := drawAccount(account, filePath); err != nil {
 			panic(err)
 		}
-		fmt.Println("Drawed the existing account.")
+		fmt.Println("Drawed the existing account to ", filePath)
 		os.Exit(0)
 	}
 	valArg := flag.Arg(0)
@@ -44,13 +47,13 @@ func main() {
 	if err := writeNewAccount(&newAccount, *accountFileName); err != nil {
 		panic(err)
 	}
-	if err := drawAccount(&newAccount); err != nil {
+	if err := drawAccount(&newAccount, filePath); err != nil {
 		panic(err)
 	}
-	fmt.Println("Drawed the new account.")
+	fmt.Println("Drawed the new account to ", filePath)
 }
 
-func drawAccount(account *[]Entry) error {
+func drawAccount(account *[]Entry, filePath string) error {
 	gainData := []chart.PointData{}
 	valuationData := []chart.PointData{}
 	for _, entry := range *account {
@@ -61,6 +64,7 @@ func drawAccount(account *[]Entry) error {
 	return chart.Render(
 		chart.SeriesData{Name: "Gain", ChartData: gainData},
 		chart.SeriesData{Name: "Valuation", ChartData: valuationData},
+		filePath,
 	)
 }
 
