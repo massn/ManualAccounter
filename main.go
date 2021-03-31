@@ -5,13 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"github.com/massn/ManualAccounter/pkg/chart"
+	jsonbin "github.com/massn/ManualAccounter/pkg/json"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
 )
-
-const defaultAccountFileName = "account.json"
 
 type Entry struct {
 	Time      time.Time `json:"time,omitempty"`
@@ -20,12 +19,21 @@ type Entry struct {
 }
 
 func main() {
-	accountFileName := flag.String("a", defaultAccountFileName, "account json file")
+	useRemote := flag.Bool("r", true, "use JSONBin data")
+	accountFileName := flag.String("a", "", "account json file")
+	key := flag.String("k", "", "JSONBin API-key")
+	binId := flag.String("b", "", "JSONBin Bin ID")
 	flag.Parse()
 
-	account := getExistingAcconut(*accountFileName)
+	var account *[]Entry
+	if *useRemote {
+		account, _ = getRemoteAcconut(*binId, *key)
+	} else {
+		account, _ = getLocalAcconut(*accountFileName)
+	}
 
-	filePath := fmt.Sprintf("charts/%s.html", time.Now().Format("2006-01-02_03:04:05"))
+	nowString := time.Now().Format("2006-01-02_03:04:05")
+	filePath := fmt.Sprintf("charts/%s.html", nowString)
 
 	if flag.NArg() == 0 {
 		if err := drawAccount(account, filePath); err != nil {
@@ -44,8 +52,14 @@ func main() {
 
 	newAccount := append(*account, newEntry)
 
-	if err := writeNewAccount(&newAccount, *accountFileName); err != nil {
-		panic(err)
+	if *useRemote {
+		if err := writeRemoteNewAccount(&newAccount, nowString, *binId, *key); err != nil {
+			panic(err)
+		}
+	} else {
+		if err := writeLocalNewAccount(&newAccount, *accountFileName); err != nil {
+			panic(err)
+		}
 	}
 	if err := drawAccount(&newAccount, filePath); err != nil {
 		panic(err)
@@ -68,13 +82,33 @@ func drawAccount(account *[]Entry, filePath string) error {
 	)
 }
 
-func getExistingAcconut(accountFileName string) *[]Entry {
+func getLocalAcconut(accountFileName string) (*[]Entry, error) {
 	account := []Entry{}
 	bytes, err := ioutil.ReadFile(accountFileName)
-	if err == nil {
-		_ = json.Unmarshal(bytes, &account)
+	if err != nil {
+		return &account, err
 	}
-	return &account
+	err = json.Unmarshal(bytes, &account)
+	if err != nil {
+		return &account, err
+	}
+	return &account, nil
+}
+
+func getRemoteAcconut(binId, key string) (*[]Entry, error) {
+	account := []Entry{}
+	rp := jsonbin.ReadParam{
+		BinId:  binId,
+		APIKey: key,
+	}
+	res, err := jsonbin.Read(rp)
+	if err != nil {
+		return &account, err
+	}
+	err = json.Unmarshal([]byte(res.Record), &account)
+	if err == nil {
+	}
+	return &account, nil
 }
 
 func getNewEntry(valArg, gainArg string) (Entry, error) {
@@ -90,13 +124,28 @@ func getNewEntry(valArg, gainArg string) (Entry, error) {
 	return Entry{Time: now, Valuation: val, Gain: gain}, nil
 }
 
-func writeNewAccount(newAccount *[]Entry, accountFileName string) error {
+func writeLocalNewAccount(newAccount *[]Entry, accountFileName string) error {
 	newBytes, err := json.MarshalIndent(newAccount, "", "    ")
 	if err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(accountFileName, newBytes, 0666); err != nil {
+	return ioutil.WriteFile(accountFileName, newBytes, 0666)
+}
+
+func writeRemoteNewAccount(newAccount *[]Entry, binName, binId, key string) error {
+	newBytes, err := json.MarshalIndent(newAccount, "", "    ")
+	if err != nil {
 		return err
 	}
-	return nil
+	fmt.Printf("%s\n", string(newBytes))
+
+	cp := jsonbin.CreateParam{
+		BinName:   binName,
+		Body:      string(newBytes),
+		IsPrivate: true,
+		APIKey:    key,
+	}
+	res, err := jsonbin.Create(cp)
+	fmt.Printf("Created json bin. Response:%#v\n", res)
+	return err
 }
