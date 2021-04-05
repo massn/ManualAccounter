@@ -10,13 +10,6 @@ import (
 
 const route = "https://api.jsonbin.io/v3/b"
 
-type CreateParam struct {
-	BinName   string
-	Body      string
-	IsPrivate bool
-	APIKey    string
-}
-
 type Response struct {
 	StatusCode int
 	Metadata   struct {
@@ -29,6 +22,13 @@ type Response struct {
 	Message string `json:"message"`
 }
 
+type CreateParam struct {
+	BinName   string
+	Body      string
+	IsPrivate bool
+	APIKey    string
+}
+
 func Create(cp CreateParam) (*Response, error) {
 	req, err := http.NewRequest("POST", route, bytes.NewBuffer([]byte(cp.Body)))
 	if err != nil {
@@ -38,6 +38,31 @@ func Create(cp CreateParam) (*Response, error) {
 	req.Header.Set("X-Master-Key", cp.APIKey)
 	req.Header.Set("X-Bin-Name", cp.BinName)
 	req.Header.Set("X-Bin-Private", strconv.FormatBool(cp.IsPrivate))
+
+	client := new(http.Client)
+	resp, err := client.Do(req)
+	if err != nil {
+		return &Response{}, err
+	}
+	defer resp.Body.Close()
+	return makeResponse(resp)
+}
+
+type UpdateParam struct {
+	BinId      string
+	Body       string
+	Versioning bool
+	APIKey     string
+}
+
+func Update(up UpdateParam) (*Response, error) {
+	req, err := http.NewRequest("PUT", route+"/"+up.BinId, bytes.NewBuffer([]byte(up.Body)))
+	if err != nil {
+		return &Response{}, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Master-Key", up.APIKey)
+	req.Header.Set("X-Bin-Versioning", strconv.FormatBool(up.Versioning))
 
 	client := new(http.Client)
 	resp, err := client.Do(req)

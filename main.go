@@ -137,7 +137,6 @@ func writeRemoteNewAccount(newAccount *[]Entry, binName, binId, key string) erro
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", string(newBytes))
 
 	cp := jsonbin.CreateParam{
 		BinName:   binName,
