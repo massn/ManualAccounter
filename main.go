@@ -137,6 +137,23 @@ func writeRemoteNewAccount(newAccount *[]Entry, binName, binId, key string) erro
 	if err != nil {
 		return err
 	}
+	up := jsonbin.UpdateParam{
+		BinId:      binId,
+		Body:       string(newBytes),
+		Versioning: false,
+		APIKey:     key,
+	}
+
+	res, err := jsonbin.Update(up)
+	if err != nil {
+		panic(err)
+	}
+
+	if res.StatusCode == 200 {
+		fmt.Println("Updated json bin")
+		return nil
+	}
+	fmt.Printf("Failed to update. Response:%#v\n", res)
 
 	cp := jsonbin.CreateParam{
 		BinName:   binName,
@@ -144,7 +161,8 @@ func writeRemoteNewAccount(newAccount *[]Entry, binName, binId, key string) erro
 		IsPrivate: true,
 		APIKey:    key,
 	}
-	res, err := jsonbin.Create(cp)
-	fmt.Printf("Created json bin. Response:%#v\n", res)
+	res, err = jsonbin.Create(cp)
+
+	fmt.Println("Created json bin")
 	return err
 }
