@@ -98,8 +98,9 @@ func getLocalAcconut(accountFileName string) (*[]Entry, error) {
 func getRemoteAcconut(binId, key string) (*[]Entry, error) {
 	account := []Entry{}
 	rp := jsonbin.ReadParam{
-		BinId:  binId,
-		APIKey: key,
+		BinId:      binId,
+		APIKey:     key,
+		BinVersion: "latest",
 	}
 	res, err := jsonbin.Read(rp)
 	if err != nil {
