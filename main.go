@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/massn/ManualAccounter/pkg/chart"
-	jsonbin "github.com/massn/ManualAccounter/pkg/json"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/massn/ManualAccounter/pkg/chart"
+	jsonbin "github.com/massn/ManualAccounter/pkg/json"
 )
 
 type Entry struct {
@@ -26,10 +27,14 @@ func main() {
 	flag.Parse()
 
 	var account *[]Entry
+	var accountErr error
 	if *useRemote {
-		account, _ = getRemoteAcconut(*binId, *key)
+		account, accountErr = getRemoteAcconut(*binId, *key)
 	} else {
-		account, _ = getLocalAcconut(*accountFileName)
+		account, accountErr = getLocalAcconut(*accountFileName)
+	}
+	if accountErr != nil {
+		panic(accountErr)
 	}
 
 	nowString := time.Now().Format("2006-01-02_03:04:05")
@@ -105,6 +110,9 @@ func getRemoteAcconut(binId, key string) (*[]Entry, error) {
 	res, err := jsonbin.Read(rp)
 	if err != nil {
 		return &account, err
+	}
+	if res.StatusCode != 200 {
+		return &account, fmt.Errorf("Failed to read remote account. status code:%d\n", res.StatusCode)
 	}
 	err = json.Unmarshal([]byte(res.Record), &account)
 	if err == nil {
