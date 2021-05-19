@@ -44,7 +44,7 @@ func main() {
 		if err := drawAccount(account, filePath); err != nil {
 			panic(err)
 		}
-		fmt.Println("Drawed the existing account to ", filePath)
+		fmt.Printf("Drawed the existing account to %s\n", filePath)
 		os.Exit(0)
 	}
 	valArg := flag.Arg(0)
@@ -69,7 +69,7 @@ func main() {
 	if err := drawAccount(&newAccount, filePath); err != nil {
 		panic(err)
 	}
-	fmt.Println("Drawed the new account to ", filePath)
+	fmt.Printf("Drawed the new account to %s\n", filePath)
 }
 
 func drawAccount(account *[]Entry, filePath string) error {
