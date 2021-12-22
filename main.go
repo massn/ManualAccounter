@@ -37,7 +37,7 @@ func main() {
 		panic(accountErr)
 	}
 
-	nowString := time.Now().Format("2006-01-02_03:04:05")
+	nowString := time.Now().Format("2006-01-02_15:04:05")
 	filePath := fmt.Sprintf("charts/%s.html", nowString)
 
 	if flag.NArg() == 0 {
